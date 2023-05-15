@@ -1,6 +1,8 @@
 const mysql = require("mysql2");
 const inquirer = require("inquirer");
+const Navigator = require("./assets/navigator");
 
+const nav = new Navigator();
 const db = mysql.createConnection(
   {
     host: "localhost",
@@ -12,46 +14,55 @@ const db = mysql.createConnection(
   console.log(`Connected to tracker_db database.`)
 );
 
-inquirer
-  .prompt([
-    {
-      type: "list",
-      name: "action",
-      choices: [
-        "View Departments",
-        "View Roles",
-        "View Employees",
-        "Add Department",
-        "Add Role",
-        "Add Employee",
-        "Update an Employee's Role",
-      ],
-      message: "What would you like to do?",
-    },
-  ])
-  .then((response) => {
-    let action = response.action;
-    switch (action) {
-      case "View Departments":
-        break;
-      case "View Roles":
-        break;
-      case "View Employees":
-        break;
-      case "Add Department":
-        break;
-      case "Add Role":
-        break;
-      case "Add Employee":
-        break;
-      case "Update an Employee's Role":
-        break;
+function asdf() {
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "action",
+        choices: [
+          "View Departments",
+          "View Roles",
+          "View Employees",
+          "Add Department",
+          "Add Role",
+          "Add Employee",
+          "Update an Employee's Role",
+        ],
+        message: "What would you like to do?",
+      },
+    ])
+    .then((response) => {
+      let action = response.action;
+      switch (action) {
+        case "View Departments":
+          viewDepartment();
+          break;
+        case "View Roles":
+          nav.viewRoles();
+          break;
+        case "View Employees":
+          nav.viewEmployees();
+          break;
+        case "Add Department":
+          nav.addDepartment();
+          break;
+        case "Add Role":
+          nav.addRole();
+          break;
+        case "Add Employee":
+          nav.addEmployee();
+          break;
+        case "Update an Employee's Role":
+          nav.updateEmployee();
+          break;
 
-      default:
-        break;
-    }
-  });
-
+        default:
+          break;
+      }
+    })
+    .then((response) => asdf());
+}
 // View Departments
 
 // View Roles
@@ -65,3 +76,4 @@ inquirer
 // Add Employee
 
 // Update Employee Role
+asdf();
