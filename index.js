@@ -12,7 +12,7 @@ const db = mysql.createConnection(
   console.log(`Connected to tracker_db database.`)
 );
 
-function asdf() {
+function askUser() {
   inquirer
     .prompt([
       {
@@ -35,29 +35,19 @@ function asdf() {
       let sql;
       switch (action) {
         case "View Departments":
-          sql = `SELECT * FROM department`;
-          db.query(sql, (err, rows) => {
-            console.log("");
-            console.table(rows);
-          });
+          viewDepartment();
           break;
         case "View Roles":
-          sql = `SELECT * FROM role`;
-          db.query(sql, (err, rows) => {
-            console.log("");
-            console.table(rows);
-          });
+          viewRole();
           break;
         case "View Employees":
-          sql = `SELECT * FROM employee`;
-          db.query(sql, (err, rows) => {
-            console.log("");
-            console.table(rows);
-          });
+          viewEmployee();
           break;
         case "Add Department":
+          addDepartment();
           break;
         case "Add Role":
+          addRole();
           break;
         case "Add Employee":
           break;
@@ -67,22 +57,107 @@ function asdf() {
         default:
           break;
       }
-    })
-    .then((response) => {
-      asdf();
     });
 }
-// View Departments
 
-// View Roles
+function viewDepartment() {
+  sql = `SELECT * FROM department`;
+  db.query(sql, (err, rows) => {
+    console.table(rows);
+  });
+  setTimeout(() => {
+    askUser();
+  }, 500);
+}
 
-// View Employees
+function viewRole() {
+  sql = `SELECT * FROM role`;
+  db.query(sql, (err, rows) => {
+    console.table(rows);
+  });
+  setTimeout(() => {
+    askUser();
+  }, 500);
+}
+
+function viewEmployee() {
+  sql = `SELECT * FROM employee`;
+  db.query(sql, (err, rows) => {
+    console.table(rows);
+  });
+  setTimeout(() => {
+    askUser();
+  }, 500);
+}
 
 // Add Department
-
+function addDepartment() {
+  inquirer
+    .prompt([
+      {
+        name: "name",
+        message: "Enter the name of the department",
+        type: "input",
+      },
+    ])
+    .then((response) => {
+      sql = `INSERT INTO department (name)
+      VALUES (?)`;
+      const params = [response.name];
+      db.query(sql, params, (err, rows) => {
+        askUser();
+      });
+    });
+}
 // Add Role
+function addRole() {
+  sql = `SELECT name FROM department`;
+  let names = [];
+  db.query(sql, (err, rows) => {
+    for (let i = 0; i < rows.length; i++) {
+      const element = rows[i].name;
+      names.push(element);
+    }
+  });
+  inquirer
+    .prompt([
+      {
+        name: "name",
+        message: "Enter the name of the role",
+        type: "input",
+      },
+      {
+        name: "salary",
+        message: "Enter the salary of the role",
+        type: "input",
+      },
+      {
+        name: "department",
+        message: "Enter the department of the role",
+        type: "list",
+        choices: names,
+      },
+    ])
+    .then((response) => {
+      let deptID;
+      console.log(response.department);
+      db.query(
+        `SELECT id FROM department WHERE name=?`,
+        response.department,
+        (err, rows) => {
+          deptID = rows[0].id;
+          sql = `INSERT INTO role (title, salary, department_id)
+          VALUES (?,?,?)`;
+          const params = [response.name, response.salary, deptID];
+          db.query(sql, params, (err, rows) => {
+            askUser();
+          });
+        }
+      );
+    });
+}
 
 // Add Employee
 
 // Update Employee Role
-asdf();
+askUser();
