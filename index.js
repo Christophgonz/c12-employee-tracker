@@ -1,6 +1,7 @@
 const mysql = require("mysql2");
 const inquirer = require("inquirer");
 
+let sql;
 const db = mysql.createConnection(
   {
     host: "localhost",
@@ -32,7 +33,6 @@ function askUser() {
     ])
     .then((response) => {
       let action = response.action;
-      let sql;
       switch (action) {
         case "View Departments":
           viewDepartment();
@@ -50,6 +50,7 @@ function askUser() {
           addRole();
           break;
         case "Add Employee":
+          addEmployee();
           break;
         case "Update an Employee's Role":
           break;
@@ -140,7 +141,6 @@ function addRole() {
     ])
     .then((response) => {
       let deptID;
-      console.log(response.department);
       db.query(
         `SELECT id FROM department WHERE name=?`,
         response.department,
@@ -158,6 +158,59 @@ function addRole() {
 }
 
 // Add Employee
+function addEmployee() {
+  sql = `SELECT title FROM role`;
+  let roles = [];
+  db.query(sql, (err, rows) => {
+    for (let i = 0; i < rows.length; i++) {
+      const element = rows[i].title;
+      roles.push(element);
+    }
+  });
+  let employees = ["None"];
+  sql = `SELECT first_name, last_name FROM employee`;
+  inquirer
+    .prompt([
+      {
+        name: "first_name",
+        message: "Enter the employee's first name",
+        type: "input",
+      },
+      {
+        name: "last_name",
+        message: "Enter the employee's last name",
+        type: "input",
+      },
+      {
+        name: "role",
+        message: "Enter the employee's role",
+        type: "list",
+        choices: roles,
+      },
+      {
+        name: "manager",
+        message: "Enter the employee's manager",
+        type: "list",
+        choices: employees,
+      },
+    ])
+    .then((response) => {
+      let roleID;
+      db.query(
+        `SELECT id FROM role WHERE title=?`,
+        response.role,
+        (err, rows) => {
+          roleID = rows[0].id;
+          sql = `INSERT INTO role (first_name, last_name, role_id)
+            VALUES (?,?,?)`;
+          const params = [response.name, response.salary, roleID];
+          db.query(sql, params, (err, rows) => {
+            askUser();
+          });
+        }
+      );
+    });
+}
 
 // Update Employee Role
 askUser();
