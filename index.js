@@ -209,7 +209,6 @@ function addEmployee() {
           `SELECT id FROM employee WHERE first_name=? OR last_name=? LIMIT 1`,
           [names[0], names[1]],
           (err, res) => {
-            console.log(res);
             managerID = res[0].id;
             db.query(
               `SELECT id FROM role WHERE title=?`,
