@@ -53,6 +53,7 @@ function askUser() {
           addEmployee();
           break;
         case "Update an Employee's Role":
+          updateEmployee();
           break;
 
         default:
@@ -168,49 +169,129 @@ function addEmployee() {
     }
   });
   let employees = ["None"];
-  sql = `SELECT first_name, last_name FROM employee`;
-  inquirer
-    .prompt([
-      {
-        name: "first_name",
-        message: "Enter the employee's first name",
-        type: "input",
-      },
-      {
-        name: "last_name",
-        message: "Enter the employee's last name",
-        type: "input",
-      },
-      {
-        name: "role",
-        message: "Enter the employee's role",
-        type: "list",
-        choices: roles,
-      },
-      {
-        name: "manager",
-        message: "Enter the employee's manager",
-        type: "list",
-        choices: employees,
-      },
-    ])
-    .then((response) => {
-      let roleID;
-      db.query(
-        `SELECT id FROM role WHERE title=?`,
-        response.role,
-        (err, rows) => {
-          roleID = rows[0].id;
-          sql = `INSERT INTO role (first_name, last_name, role_id)
-            VALUES (?,?,?)`;
-          const params = [response.name, response.salary, roleID];
-          db.query(sql, params, (err, rows) => {
-            askUser();
-          });
-        }
-      );
-    });
+  sql = `SELECT first_name,last_name FROM employee`;
+  db.query(sql, (err, rows) => {
+    for (let i = 0; i < rows.length; i++) {
+      let element = rows[i].first_name;
+      element += " " + rows[i].last_name;
+      employees.push(element);
+    }
+    inquirer
+      .prompt([
+        {
+          name: "first_name",
+          message: "Enter the employee's first name",
+          type: "input",
+        },
+        {
+          name: "last_name",
+          message: "Enter the employee's last name",
+          type: "input",
+        },
+        {
+          name: "role",
+          message: "Enter the employee's role",
+          type: "list",
+          choices: roles,
+        },
+        {
+          name: "manager",
+          message: "Enter the employee's manager",
+          type: "list",
+          choices: employees,
+        },
+      ])
+      .then((response) => {
+        let names = response.manager.split(" ");
+        let managerID;
+        let roleID;
+        db.query(
+          `SELECT id FROM employee WHERE first_name=? OR last_name=? LIMIT 1`,
+          [names[0], names[1]],
+          (err, res) => {
+            console.log(res);
+            managerID = res[0].id;
+            db.query(
+              `SELECT id FROM role WHERE title=?`,
+              response.role,
+              (err, rows) => {
+                roleID = rows[0].id;
+                sql = `INSERT INTO employee (first_name, last_name, role_id,manager_id)
+                      VALUES (?,?,?,?)`;
+                const params = [
+                  response.first_name,
+                  response.last_name,
+                  roleID,
+                  managerID,
+                ];
+                db.query(sql, params, (err, rows) => {
+                  askUser();
+                });
+              }
+            );
+          }
+        );
+      });
+  });
 }
 
 // Update Employee Role
+function updateEmployee() {
+  sql = `SELECT first_name,last_name FROM employee`;
+  let names = [];
+  let roles = [];
+  db.query(sql, (err, rows) => {
+    for (let i = 0; i < rows.length; i++) {
+      let element = rows[i].first_name;
+      element += " " + rows[i].last_name;
+      names.push(element);
+    }
+  });
+  sql = `SELECT title FROM role`;
+  db.query(sql, (err, rows) => {
+    for (let i = 0; i < rows.length; i++) {
+      const element = rows[i].title;
+      roles.push(element);
+    }
+    inquirer
+      .prompt([
+        {
+          name: "name",
+          message: "Enter the employee's name",
+          type: "list",
+          choices: names,
+        },
+        {
+          name: "role",
+          message: "Enter the employee's role",
+          type: "list",
+          choices: roles,
+        },
+      ])
+      .then((response) => {
+        let names = response.name.split(" ");
+        let employeeID;
+        let roleID;
+        db.query(
+          `SELECT id FROM employee WHERE first_name=? OR last_name=? LIMIT 1`,
+          [names[0], names[1]],
+          (err, res) => {
+            employeeID = res[0].id;
+            db.query(
+              `SELECT id FROM role WHERE title=?`,
+              response.role,
+              (err, rows) => {
+                roleID = rows[0].id;
+                sql = `UPDATE employee SET role_id=? WHERE id=?`;
+                const params = [roleID, employeeID];
+                db.query(sql, params, (err, rows) => {
+                  askUser();
+                });
+              }
+            );
+          }
+        );
+      });
+  });
+}
 askUser();
